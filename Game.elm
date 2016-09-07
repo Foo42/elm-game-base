@@ -22,7 +22,8 @@ main =
 
 
 type alias Model =
-    { velocity : Float
+    { accelleration : Float
+    , velocity : Float
     , position : Float
     , shotsFired : Int
     }
@@ -30,7 +31,8 @@ type alias Model =
 
 model : Model
 model =
-    { velocity = 0
+    { accelleration = 0
+    , velocity = 0
     , position = 0
     , shotsFired = 0
     }
@@ -55,7 +57,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         TimeUpdate dt ->
-            ( applyPhysics dt model, Cmd.none )
+            ( progressTime dt model, Cmd.none )
 
         KeyDown keyCode ->
             ( keyDown keyCode model, Cmd.none )
@@ -71,10 +73,10 @@ keyDown keyCode model =
             incrementShotsFired model
 
         ArrowLeft ->
-            updateVelocity -1.0 model
+            updateAcceleration -1.0 model
 
         ArrowRight ->
-            updateVelocity 1.0 model
+            updateAcceleration 1.0 model
 
         _ ->
             model
@@ -84,23 +86,31 @@ keyUp : KeyCode -> Model -> Model
 keyUp keyCode model =
     case Key.fromCode keyCode of
         ArrowLeft ->
-            updateVelocity 0 model
+            updateAcceleration 0 model
 
         ArrowRight ->
-            updateVelocity 0 model
+            updateAcceleration 0 model
 
         _ ->
             model
 
+progressTime : Float -> Model -> Model
+progressTime dt model =
+    model
+    |> applySecondDerivatives dt
+    |> applyFirstDerivatives dt
 
-applyPhysics : Float -> Model -> Model
-applyPhysics dt model =
+applySecondDerivatives: Float -> Model -> Model
+applySecondDerivatives dt model =
+    { model | velocity = model.velocity + model.accelleration * dt }
+
+applyFirstDerivatives: Float -> Model -> Model
+applyFirstDerivatives dt model =
     { model | position = model.position + model.velocity * dt }
 
-
-updateVelocity : Float -> Model -> Model
-updateVelocity newVelocity model =
-    { model | velocity = newVelocity }
+updateAcceleration : Float -> Model -> Model
+updateAcceleration newAcceleration model =
+    { model | accelleration = newAcceleration }
 
 
 incrementShotsFired : Model -> Model
