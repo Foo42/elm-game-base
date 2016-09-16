@@ -1,6 +1,8 @@
 module Game exposing (..)
 
-import Html exposing (Html, text)
+import Html exposing (..)
+import Html.Events exposing (..)
+import Html.Attributes exposing (..)
 import Html.App as Html
 import Keyboard exposing (KeyCode)
 import AnimationFrame
@@ -26,6 +28,7 @@ type alias Model =
     , velocity : Float
     , position : Float
     , shotsFired : Int
+    , dt: Float
     }
 
 
@@ -35,6 +38,7 @@ model =
     , velocity = 0
     , position = 0
     , shotsFired = 0
+    , dt = 0
     }
 
 
@@ -96,13 +100,17 @@ keyUp keyCode model =
 
 progressTime : Float -> Model -> Model
 progressTime dt model =
-    model
+    {model | dt = dt}
     |> applySecondDerivatives dt
     |> applyFirstDerivatives dt
 
 applySecondDerivatives: Float -> Model -> Model
 applySecondDerivatives dt model =
-    { model | velocity = model.velocity + model.accelleration * dt }
+    { model | velocity = model.velocity + model.accelleration * dt - (drag dt model.velocity) }
+
+drag : Float -> Float -> Float
+drag dt velocity  =
+    velocity * dt/1000
 
 applyFirstDerivatives: Float -> Model -> Model
 applyFirstDerivatives dt model =
@@ -121,10 +129,22 @@ incrementShotsFired model =
 
 -- VIEW
 
+calculateLeftPercentage : Model -> String
+calculateLeftPercentage model =
+    (toString (model.position / 5000 + 50)) ++ "%"
 
 view : Model -> Html msg
 view model =
-    text (toString model)
+    div
+        [style [("height", "100%"), ("width", "100%"), ("background-color", "black"), ("position", "relative")]]
+        [
+            text (toString model),
+            div
+            [
+                style [("height", "1%"), ("width", "1%"), ("background-color", "white"), ("position", "absolute"), ("left", calculateLeftPercentage model)]
+            ]
+            []
+        ]
 
 
 
