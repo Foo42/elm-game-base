@@ -23,7 +23,7 @@ main =
 -- MODEL
 
 
-type alias Model =
+type alias Player =
     { accelleration : Float
     , velocity : Float
     , position : Float
@@ -31,9 +31,8 @@ type alias Model =
     , dt: Float
     }
 
-
-model : Model
-model =
+player : Player
+player =
     { accelleration = 0
     , velocity = 0
     , position = 0
@@ -41,11 +40,17 @@ model =
     , dt = 0
     }
 
+type alias Model =
+    { player: Player
+    }
+
+model : Model
+model =
+    {player = player}
 
 init : ( Model, Cmd Msg )
 init =
     ( model, Cmd.none )
-
 
 
 -- UPDATE
@@ -74,13 +79,13 @@ keyDown : KeyCode -> Model -> Model
 keyDown keyCode model =
     case Key.fromCode keyCode of
         Space ->
-            incrementShotsFired model
+            {model | player = incrementShotsFired model.player}
 
         ArrowLeft ->
-            updateAcceleration -1.0 model
+            {model | player = updateAcceleration -1.0 model.player}
 
         ArrowRight ->
-            updateAcceleration 1.0 model
+            {model | player = updateAcceleration 1.0 model.player}
 
         _ ->
             model
@@ -90,48 +95,48 @@ keyUp : KeyCode -> Model -> Model
 keyUp keyCode model =
     case Key.fromCode keyCode of
         ArrowLeft ->
-            updateAcceleration 0 model
+            {model | player = updateAcceleration 0 model.player}
 
         ArrowRight ->
-            updateAcceleration 0 model
+            {model | player = updateAcceleration 0 model.player}
 
         _ ->
             model
 
 progressTime : Float -> Model -> Model
 progressTime dt model =
-    {model | dt = dt}
-    |> applySecondDerivatives dt
-    |> applyFirstDerivatives dt
+    let updatedPlayer = (model.player |> (applySecondDerivatives dt) |> (applyFirstDerivatives dt) )
+    in
+        {model | player = updatedPlayer}
 
-applySecondDerivatives: Float -> Model -> Model
-applySecondDerivatives dt model =
-    { model | velocity = model.velocity + model.accelleration * dt - (drag dt model.velocity) }
+applySecondDerivatives: Float -> Player -> Player
+applySecondDerivatives dt player =
+    { player | velocity = player.velocity + player.accelleration * dt - (drag dt player.velocity) }
 
 drag : Float -> Float -> Float
-drag dt velocity  =
+drag dt velocity =
     velocity * dt/1000
 
-applyFirstDerivatives: Float -> Model -> Model
-applyFirstDerivatives dt model =
-    { model | position = model.position + model.velocity * dt }
+applyFirstDerivatives: Float -> Player -> Player
+applyFirstDerivatives dt player =
+    { player | position = player.position + player.velocity * dt }
 
-updateAcceleration : Float -> Model -> Model
-updateAcceleration newAcceleration model =
-    { model | accelleration = newAcceleration }
+updateAcceleration : Float -> Player -> Player
+updateAcceleration newAcceleration player =
+    { player | accelleration = newAcceleration }
 
 
-incrementShotsFired : Model -> Model
-incrementShotsFired model =
-    { model | shotsFired = model.shotsFired + 1 }
+incrementShotsFired : Player -> Player
+incrementShotsFired player =
+    { player | shotsFired = player.shotsFired + 1 }
 
 
 
 -- VIEW
 
-calculateLeftPercentage : Model -> String
-calculateLeftPercentage model =
-    (toString (model.position / 5000 + 50)) ++ "%"
+calculateLeftPercentage : Player -> String
+calculateLeftPercentage player =
+    (toString (player.position / 5000 + 50)) ++ "%"
 
 view : Model -> Html msg
 view model =
@@ -141,7 +146,7 @@ view model =
             text (toString model),
             div
             [
-                style [("height", "1%"), ("width", "1%"), ("background-color", "white"), ("position", "absolute"), ("left", calculateLeftPercentage model)]
+                style [("height", "1%"), ("width", "1%"), ("background-color", "white"), ("position", "absolute"), ("left", calculateLeftPercentage model.player)]
             ]
             []
         ]
