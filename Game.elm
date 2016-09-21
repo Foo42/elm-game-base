@@ -22,14 +22,12 @@ main =
 
 -- MODEL
 
-
-type alias Player =
-    { accelleration : Float
+type alias Physical t =
+    {t | accelleration : Float
     , velocity : Float
-    , position : Float
-    , shotsFired : Int
-    , dt: Float
-    }
+    , position : Float}
+
+type alias Player = Physical { shotsFired : Int }
 
 player : Player
 player =
@@ -37,7 +35,6 @@ player =
     , velocity = 0
     , position = 0
     , shotsFired = 0
-    , dt = 0
     }
 
 type alias Model =
@@ -109,21 +106,21 @@ progressTime dt model =
     in
         {model | player = updatedPlayer}
 
-applySecondDerivatives: Float -> Player -> Player
-applySecondDerivatives dt player =
-    { player | velocity = player.velocity + player.accelleration * dt - (drag dt player.velocity) }
+applySecondDerivatives: Float -> Physical t -> Physical t
+applySecondDerivatives dt physical =
+    { physical | velocity = physical.velocity + physical.accelleration * dt - (drag dt physical.velocity) }
 
 drag : Float -> Float -> Float
 drag dt velocity =
     velocity * dt/1000
 
-applyFirstDerivatives: Float -> Player -> Player
-applyFirstDerivatives dt player =
-    { player | position = player.position + player.velocity * dt }
+applyFirstDerivatives: Float -> Physical t -> Physical t
+applyFirstDerivatives dt physical =
+    { physical | position = physical.position + physical.velocity * dt }
 
-updateAcceleration : Float -> Player -> Player
-updateAcceleration newAcceleration player =
-    { player | accelleration = newAcceleration }
+updateAcceleration : Float -> Physical t -> Physical t
+updateAcceleration newAcceleration physical =
+    { physical | accelleration = newAcceleration }
 
 
 incrementShotsFired : Player -> Player
@@ -134,9 +131,9 @@ incrementShotsFired player =
 
 -- VIEW
 
-calculateLeftPercentage : Player -> String
-calculateLeftPercentage player =
-    (toString (player.position / 5000 + 50)) ++ "%"
+calculateLeftPercentage : Physical t -> String
+calculateLeftPercentage physical =
+    (toString (physical.position / 5000 + 50)) ++ "%"
 
 view : Model -> Html msg
 view model =
